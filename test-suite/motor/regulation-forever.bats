@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-# ------------------------------------------------------------------------------
+#!/usr/bin/bash
+#
 # regulation-forever.bats - Test set for running motors
 #
 # regulation_mode on
@@ -10,7 +10,6 @@
 
 load test_helper
 
-# ------------------------------------------------------------------------------
 # This part executes once for preprocessing, then once again for every test
 # in the file. To make sure we only spend time looking for the motor once, we
 # can check to see if port is initialized first.
@@ -18,36 +17,32 @@ load test_helper
 # Here's also where we set up the common features for the test set
 
 if [[ -z "${port}" ]]; then
-    export port=$(find_motor_port "outA")
-#   echo "# outA -> ${port}"
+	export port=$(find_motor_port "outA")
+#	echo "# outA -> ${port}"
 fi
 
-# ------------------------------------------------------------------------------
-
 setup() {
-    echo  "0" > "${port}/run"
+	echo  "0" > "${port}/run"
 }
 
 teardown() {
-    echo  "0" > "${port}/run"
+	echo  "0" > "${port}/run"
 }
 
-# ------------------------------------------------------------------------------
-
 @test "Check that the tacho-motor class folder exists" {
-    [ -d "/sys/class/tacho-motor" ]
+	[ -d "/sys/class/tacho-motor" ]
 }
 
 @test "Check that the tacho-motor device folder exists" {
-    [ -d "${port}" ]
+	[ -d "${port}" ]
 }
 
 @test "Check assorted speeds - stop_mode coast" {
-    setup_regulated_motor 0 "forever" "coast" 0 0 0 
-    test_speeds " 900  600    0  200  400    0" 5
+	setup_regulated_motor 0 "forever" "coast" 0 0 0
+	test_speeds " 900  600    0  200  400    0" 5
 }
 
 @test "Check assorted speeds - stop_mode brake" {
-    setup_regulated_motor 0 "forever" "brake" 0 0 0
-    test_speeds "-900 -600    0 -200 -400    0" 5
+	setup_regulated_motor 0 "forever" "brake" 0 0 0
+	test_speeds "-900 -600    0 -200 -400    0" 5
 }

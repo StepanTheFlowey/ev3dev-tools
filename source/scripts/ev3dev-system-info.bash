@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 
 FORMAT_MARKDOWN="false"
 case "$1" in
@@ -20,12 +20,12 @@ get_ev3dev_release() {
   fi
 }
 
-get_package_version () {
+get_package_version() {
   target_line=$(dpkg-query -s "$1" | grep -m1 ^Version)
   echo "${target_line##*: }"
 }
 
-get_bluetooth_version () {
+get_bluetooth_version() {
   hciconfig -a | grep -o 'HCI Version: [[:digit:]]\.[[:digit:]]' \
     | cut -c 14-
 }
@@ -35,19 +35,19 @@ print_val() {
 }
 
 print_fence_if_markdown() {
-  if [ "$FORMAT_MARKDOWN" = "true" ]; then
+  if [[ "$FORMAT_MARKDOWN" = "true" ]]; then
     echo '```'
   fi
 }
 
 print_title_if_markdown() {
-  if [ "$FORMAT_MARKDOWN" = "true" ]; then
+  if [[ "$FORMAT_MARKDOWN" = "true" ]]; then
     echo "**System info (from \`ev3dev-sysinfo\`)**"
   fi
 }
 
 print_copy_line_if_markdown() {
-  if [ "$FORMAT_MARKDOWN" = "true" ]; then
+  if [[ "$FORMAT_MARKDOWN" = "true" ]]; then
     echo "<!-- Copy everything between these lines -->"
   fi
 }

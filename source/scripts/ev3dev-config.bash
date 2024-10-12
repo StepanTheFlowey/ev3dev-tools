@@ -1,23 +1,19 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 
-# Part of ev3dev-tools http://github.com/ev3dev/ev3dev-tools
-#
-# See LICENSE file for copyright and license details
-
-# General config ====================================================
+# General config
 MENU_TITLE="ev3dev Software Configuration Tool (ev3dev-config)"
 SELECTABLE_BACKTITLE="Arrow keys to navigate / <SPACE> to select / <ENTER> to save / <ESC> to exit without saving"
 MENU_BACKTITLE="Arrow keys to navigate / <ENTER> to select / <ESC> to exit menu"
 ASK_TO_REBOOT=0
 
-# Serial config =====================================================
+# Serial config
 UENV_TXT="/boot/flash/uEnv.txt"
 DISABLE_TTY1_LINE="console=tty1"
 SYSCTL_EV3_CONF="/etc/sysctl.d/ev3.conf"
 DISABLE_KERNEL_MESSAGES_LINE="kernel.printk = 0 4 1 3"
 SERIAL_SHELL_SERVICE="serial-getty@ttyS1.service"
 
-# Platform config ===================================================
+# Platform config
 DEVICE_TREE_MODEL_FILE="/proc/device-tree/model"
 RASPI_CONFIG_FILE="/boot/flash/config.txt"
 PISTORMS_CONFIG_LINES=(
@@ -35,7 +31,7 @@ BRICKPIPLUS_CONFIG_LINES=(
 
 declare -a PLATFORM_MENU_ITEMS
 
-# Service config ====================================================
+# Service config
 declare -A SERVICE_STATUS
 declare -a SERVICE_CHECKLIST_OPTIONS
 declare -A NEW_SERVICE_STATUS
@@ -47,10 +43,10 @@ TARGET_SERVICES=(
   ["openrobertalab"]="OpenRoberta Lab connector"
 )
 
-# Utilities =========================================================
+# Utilities
 calc_wt_size() {
-  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
-  # output from tput. However in this case, tput detects neither stdout or 
+  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error
+  # output from tput. However in this case, tput detects neither stdout or
   # stderr is a tty and so only gives default 80, 24 values
   WT_HEIGHT=17
   WT_WIDTH=$(tput cols)
@@ -80,51 +76,51 @@ boolean () {
 }
 
 get_current_hostname() {
-    # This will return "n/a" if the current hostname doesn't conform to proper formatting
-    host_line="$(hostnamectl status | grep -m1 ^"\\s*Static hostname")"
-    echo "${host_line##*: }"
+  # This will return "n/a" if the current hostname doesn't conform to proper formatting
+  host_line="$(hostnamectl status | grep -m1 ^"\\s*Static hostname")"
+  echo "${host_line##*: }"
 }
 
 comment_line() {
-    file_path="$1"
-    line_contents="$2"
-    
-    sed -i "/^\s*${line_contents}/ s/^/#/" $file_path
+  file_path="$1"
+  line_contents="$2"
+
+  sed -i "/^\s*${line_contents}/ s/^/#/" $file_path
 }
 
 uncomment_line() {
-    file_path="$1"
-    line_contents="$2"
-    
-    sed -i "/${line_contents}/ s/# *//" $file_path
+  file_path="$1"
+  line_contents="$2"
+
+  sed -i "/${line_contents}/ s/# *//" $file_path
 }
 
 uncomment_lines() {
-    file_path="$1"
-    shift
-    
-    for line_contents in "$@"; do
-      uncomment_line "$file_path" "$line_contents"
-    done
+  file_path="$1"
+  shift
+
+  for line_contents in "$@"; do
+    uncomment_line "$file_path" "$line_contents"
+  done
 }
 
 comment_lines() {
-    file_path="$1"
-    shift
-    
-    for line_contents in "$@"; do
-      comment_line "$file_path" "$line_contents"
-    done
+  file_path="$1"
+  shift
+
+  for line_contents in "$@"; do
+    comment_line "$file_path" "$line_contents"
+  done
 }
 
 all_lines_uncommented() {
   file_path="$1"
   shift
-  
+
   if [ ! -f "$file_path" ]; then
     return 2
   fi
-  
+
   for line_contents in "$@"; do
     if ! grep -q "^\s*$line_contents" "$file_path"; then
       return 1
@@ -132,14 +128,14 @@ all_lines_uncommented() {
   done
 }
 
-# Hardware and platform selection ===================================
+# Hardware and platform selection
 detect_current_platform() {
   if [ ! -f "$DEVICE_TREE_MODEL_FILE" ]; then
     # TODO: We should check /proc/cpuinfo here instead of just assuming
     echo "brick"
     return 0
   fi
-  
+
   device_tree_model="$(cat $DEVICE_TREE_MODEL_FILE)"
   if [[ "$device_tree_model" == "LEGO MINDSTORMS EV3"* ]]; then
     echo "brick"
@@ -161,14 +157,14 @@ detect_current_platform_config() {
     echo "evb"
     return 0
   fi
-  
+
   all_lines_uncommented "$RASPI_CONFIG_FILE" "${PISTORMS_CONFIG_LINES[@]}"
   PISTORMS_ENABLED="$(boolean $?)"
   all_lines_uncommented "$RASPI_CONFIG_FILE" "${BRICKPI_CONFIG_LINES[@]}"
   BRICKPI_ENABLED="$(boolean $?)"
   all_lines_uncommented "$RASPI_CONFIG_FILE" "${BRICKPIPLUS_CONFIG_LINES[@]}"
   BRICKPIPLUS_ENABLED="$(boolean $?)"
-  
+
   if [ "$PISTORMS_ENABLED" = true ] && [ "$BRICKPI_ENABLED" = false ] && [ "$BRICKPIPLUS_ENABLED" = false ]; then
     echo "pistorms"
   elif [ "$PISTORMS_ENABLED" = false ] && [ "$BRICKPIPLUS_ENABLED" = true ]; then #BrickPi+ config is a superset of BrickPi config
@@ -183,7 +179,7 @@ detect_current_platform_config() {
 get_platform_menu_state() {
   current_option="$1"
   detected_platform_config="$2"
-  
+
   if [ "$current_option" = "$detected_platform_config" ]; then
     echo "on"
   elif [ "$detected_platform_config" = "unknown" ] && [ "$current_option" = "brick" ]; then
@@ -204,8 +200,8 @@ clean_raspi_plat_config() {
 get_available_platform_menu_items() {
   current_platform="$1"
   current_platform_config="$2"
-  
-  
+
+
   PLATFORM_MENU_ITEMS=()
   if [ "$current_platform" = "raspi" ]; then
     PLATFORM_MENU_ITEMS=(
@@ -227,7 +223,7 @@ get_available_platform_menu_items() {
 
 get_available_hardware_options() {
   current_platform="$1"
-  
+
   HARDWARE_MENU_OPTIONS=()
   if [ "$current_platform" = "raspi" ]; then
     HARDWARE_MENU_OPTIONS=(
@@ -244,7 +240,7 @@ do_platform_menu() {
   current_platform=$(detect_current_platform)
   current_platform_config="$(detect_current_platform_config)"
   get_available_platform_menu_items "$current_platform" "$current_platform_config"
-  
+
   FUN=$(whiptail --title "$MENU_TITLE" --backtitle "$SELECTABLE_BACKTITLE" --radiolist "Hardware Platform" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
     "${PLATFORM_MENU_ITEMS[@]}" \
     3>&1 1>&2 2>&3)
@@ -266,12 +262,12 @@ do_platform_menu() {
 do_hardware_menu() {
   current_platform=$(detect_current_platform)
   get_available_hardware_options "$current_platform"
-  
+
   if [ ${#HARDWARE_MENU_OPTIONS[@]} -eq 0 ]; then
     whiptail --msgbox "There are no hardware options for your platform." 20 60 1
     return 0
   fi
-  
+
   FUN=$(whiptail --title "$MENU_TITLE" --menu "Hardware Configuration" --backtitle "$MENU_BACKTITLE" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "${HARDWARE_MENU_OPTIONS[@]}" \
     3>&1 1>&2 2>&3)
@@ -287,23 +283,23 @@ do_hardware_menu() {
   fi
 }
 
-# Serial output selection ===========================================
+# Serial output selection
 detect_current_serial_config() {
   sensor_enabled=true
   if grep -q "^\s*#\s*$DISABLE_TTY1_LINE" "$UENV_TXT"; then
     sensor_enabled=false
   fi
-  
+
   messages_enabled=false
   if grep -q "\s*#\s*kernel\.printk" "$SYSCTL_EV3_CONF"; then
     messages_enabled=true
   fi
-  
+
   shell_enabled=true
   if systemctl show "$SERIAL_SHELL_SERVICE" | grep -q "LoadState=masked"; then
     shell_enabled=false
   fi
-  
+
   if [ "$sensor_enabled" = true ] && [ "$messages_enabled" = false ] && [ "$shell_enabled" = false ]; then
     echo "sensor"
   elif [ "$sensor_enabled" = false ] && [ "$messages_enabled" = true ] && [ "$shell_enabled" = false ]; then
@@ -320,7 +316,7 @@ detect_current_serial_config() {
 get_serial_menu_state() {
   current_option="$1"
   detected_serial_config="$2"
-  
+
   if [ "$current_option" = "$detected_serial_config" ]; then
     echo "on"
   elif [ "$detected_serial_config" = "unknown" ] && [ "$current_serial_config" = "sensor" ]; then
@@ -333,7 +329,7 @@ get_serial_menu_state() {
 configure_in1_serial() {
   enable_kernel_messages="$1"
   enable_shell="$2"
-  
+
   if [ "$enable_kernel_messages" = false ] && [ "$enable_shell" = false ]; then
     uncomment_line "$UENV_TXT" "$DISABLE_TTY1_LINE"
 
@@ -357,17 +353,17 @@ configure_in1_serial() {
       flash-kernel
     fi
   fi
-  
+
   if [ "$enable_kernel_messages" = true ]; then
     comment_line "$SYSCTL_EV3_CONF" "$DISABLE_KERNEL_MESSAGES_LINE"
   else
     uncomment_line "$SYSCTL_EV3_CONF" "$DISABLE_KERNEL_MESSAGES_LINE"
   fi
-  
+
   if [ "$enable_shell" = true ]; then
-    systemctl unmask "$SERIAL_SHELL_SERVICE" 
+    systemctl unmask "$SERIAL_SHELL_SERVICE"
   else
-    systemctl mask "$SERIAL_SHELL_SERVICE" 
+    systemctl mask "$SERIAL_SHELL_SERVICE"
   fi
 }
 
@@ -390,7 +386,7 @@ do_serial_menu() {
       both) configure_in1_serial true true ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-    
+
     new_serial_config=$(detect_current_serial_config)
     if [ "$new_serial_config" != "$current_serial_config" ]; then
         ASK_TO_REBOOT=1
@@ -398,7 +394,7 @@ do_serial_menu() {
   fi
 }
 
-# Misc menus and simple functionality ===============================
+# Misc menus and simple functionality
 do_warn_wait() {
   whiptail --msgbox "\
 This functionality may take 30 seconds or more to load.
@@ -447,10 +443,10 @@ do_change_timezone() {
   dpkg-reconfigure tzdata
 }
 
-do_change_hostname() {  
+do_change_hostname() {
   whiptail --msgbox "\
 Please note: Hostnames should only contain the
-ASCII letters 'a' through 'z' (case-insensitive), 
+ASCII letters 'a' through 'z' (case-insensitive),
 the digits '0' through '9', and the hyphen.
 Hostname labels also shouldn't begin or end
 with a hyphen, and other symbols, punctuation
@@ -478,13 +474,13 @@ do_finish() {
     whiptail --yesno "Some operations that have been performed require a reboot to fully function. Would you like to reboot now?" 20 60 2
     if [ $? -eq 0 ]; then # yes
       sync
-      reboot
+      exec reboot
     fi
   fi
   exit 0
 }
 
-# Service selection =================================================
+# Service selection
 get_service_status() {
   for service_name in "${!TARGET_SERVICES[@]}"; do
     if [ "$service_name" = "nmbd" ]; then
@@ -507,7 +503,7 @@ get_service_checklist_options() {
     if [ ${SERVICE_STATUS["$service_name"]} == "enabled" ]; then
         service_check_state="on"
     fi
-    
+
     SERVICE_CHECKLIST_OPTIONS=("${SERVICE_CHECKLIST_OPTIONS[@]}" "$service_name" "${TARGET_SERVICES["$service_name"]}" "$service_check_state")
   done
 }
@@ -518,7 +514,7 @@ transform_service_checklist_options() {
     # whiptail returns quoted names, so we need to add quotes for the comparison
     contains_element "\"$service_name\"" "$@"
     contain_result=$?
-    
+
     if [ $contain_result -eq 0 ]; then
       NEW_SERVICE_STATUS["$service_name"]="enabled"
     else
@@ -531,7 +527,7 @@ apply_service_changes() {
   for service_name in "${!TARGET_SERVICES[@]}"; do
     original_state="${SERVICE_STATUS["$service_name"]}"
     new_state="${NEW_SERVICE_STATUS["$service_name"]}"
-    
+
     echo "$service_name had an original state of $original_state and has a new state of $new_state"
     if [ "$original_state" = "disabled" ] && [ "$new_state" = "enabled" ]; then
       echo "  Enabling $service_name"
@@ -548,12 +544,12 @@ apply_service_changes() {
 do_service_menu() {
   get_service_status
   get_service_checklist_options
-  
+
   FUN=$(whiptail --title "$MENU_TITLE" --checklist "Enable/Disable Services" --backtitle "$SELECTABLE_BACKTITLE" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
     "${SERVICE_CHECKLIST_OPTIONS[@]}" \
     3>&1 1>&2 2>&3)
   RET=$?
-  
+
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then

@@ -5,14 +5,13 @@ Build-Depends: debhelper (>= 10)
 Standards-Version: 3.9.8
 Section: utils
 Homepage: http://www.ev3dev.org
-Vcs-Git: https://github.com/ev3dev/ev3dev-tools.git
-Vcs-Browser: https://github.com/ev3dev/ev3dev-tools
+Vcs-Git: https://github.com/StepanTheFlowey/ev3dev-tools.git
+Vcs-Browser: https://github.com/StepanTheFlowey/ev3dev-tools
 
 Package: ev3dev-tools
 Architecture: all
 Depends: flash-kernel, ${misc:Depends}
 Description: Miscellaneous tools for ev3dev
- A collection of tools for ev3dev.
- * ev3dev-config: A graphical command line utility to help with basic system
-   administration.
- * ev3dev-sysinfo: Command line utility to display system information.
+ * ev3dev-config:    A graphical command line utility to help with basic system administration.
+ * ev3dev-sysinfo:   Command line utility to display system information.
+ * ev3dev-powerinfo: Prints power supply information
