@@ -1,4 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: <https://github.com/ev3dev/ev3dev-tools>
+Upstream-Name: ev3dev-tools
 
 Files: debian/*
 Copyright: 2016 David Lechner <david@lechnology.com>
